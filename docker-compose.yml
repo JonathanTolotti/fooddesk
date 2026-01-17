@@ -1,0 +1,84 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        UID: 1000  # seu UID no WSL
+        GID: 1000  # seu GID no WSL
+    container_name: fooddesk-app
+    volumes:
+      - .:/var/www
+    working_dir: /var/www
+    command: php-fpm -F
+    ports:
+      - "9000:9000"
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    container_name: fooddesk-nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: fooddesk-db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fooddesk
+      MYSQL_USER: fooddesk
+      MYSQL_PASSWORD: fooddesk
+    volumes:
+      - db_data:/var/lib/mysql
+
+  redis:
+    image: redis:alpine
+    container_name: fooddesk-redis
+    ports:
+      - "6379:6379"
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: fooddesk-queue
+    volumes:
+      - .:/var/www
+    working_dir: /var/www
+    command: php artisan queue:work
+    depends_on:
+      - app
+      - redis
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: fooddesk-scheduler
+    volumes:
+      - .:/var/www
+    working_dir: /var/www
+    command: php artisan schedule:work
+    depends_on:
+      - app
+
+volumes:
+  db_data:
