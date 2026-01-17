@@ -28,3 +28,5 @@ Thumbs.db
 .npm
 .bash_history
 .editorconfig
+.clinerules
+CLAUDE.md
