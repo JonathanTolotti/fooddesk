@@ -5,13 +5,15 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -23,7 +25,8 @@ class User extends Authenticatable
         'login',
         'email',
         'password',
-        'role'
+        'role',
+        'uuid'
     ];
 
     /**
@@ -35,6 +38,28 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    /**
+     * Boot the model - gera UUID automaticamente ao criar
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (User $user): void {
+            if (empty($user->uuid)) {
+                $user->uuid = Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Route model binding usa UUID ao invés de ID
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     /**
      * Get the attributes that should be cast.
