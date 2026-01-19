@@ -15,6 +15,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:manage-users')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
+        Route::post('users/filter', [UserController::class, 'filter'])->name('users.filter');
         Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     });
 });

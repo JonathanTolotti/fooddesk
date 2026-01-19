@@ -7,7 +7,9 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use App\Services\UserService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
@@ -22,6 +24,35 @@ class UserController extends Controller
         $users = $this->userService->paginate();
 
         return view('users.index', compact('users'));
+    }
+
+    public function filter(Request $request): JsonResponse
+    {
+        $filters = $request->only(['search', 'role', 'status']);
+        $page = (int) $request->input('page', 1);
+        $paginator = $this->userService->filter($filters, 10, $page);
+
+        return response()->json([
+            'users' => $paginator->map(fn ($user) => [
+                'id' => $user->id,
+                'uuid' => $user->uuid,
+                'name' => $user->name,
+                'email' => $user->email,
+                'login' => $user->login,
+                'role' => $user->role->value,
+                'role_label' => $user->role->label(),
+                'status' => $user->status,
+                'created_at' => $user->created_at->format('d/m/Y'),
+            ]),
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+        ]);
     }
 
     public function create(): View
