@@ -16,7 +16,7 @@
                                 Cadastros
                             </x-slot>
                             <x-slot name="content">
-                                <x-nav-dropdown-link href="#" :active="request()->routeIs('categories.*')">
+                                <x-nav-dropdown-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
                                     Categorias
                                 </x-nav-dropdown-link>
                                 <x-nav-dropdown-link href="#" :active="request()->routeIs('products.*')">
@@ -123,7 +123,7 @@
                     </svg>
                 </button>
                 <div x-show="openCadastros" x-transition class="ps-4">
-                    <x-responsive-nav-link href="#" :active="request()->routeIs('categories.*')">
+                    <x-responsive-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
                         Categorias
                     </x-responsive-nav-link>
                     <x-responsive-nav-link href="#" :active="request()->routeIs('products.*')">
