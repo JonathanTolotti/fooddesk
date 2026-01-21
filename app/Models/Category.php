@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\CategoryObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
+#[ObservedBy(CategoryObserver::class)]
 class Category extends Model
 {
     use HasFactory, SoftDeletes;
@@ -41,5 +45,10 @@ class Category extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    public function histories(): HasMany
+    {
+        return $this->hasMany(CategoryHistory::class)->orderByDesc('created_at');
     }
 }

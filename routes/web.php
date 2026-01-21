@@ -23,6 +23,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
         Route::patch('/categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
         Route::post('/categories/reorder', [CategoryController::class, 'reorder'])->name('categories.reorder');
+        Route::get('/categories/{category}/history', [CategoryController::class, 'history'])->name('categories.history');
     });
 
     // Sistema (Users)
