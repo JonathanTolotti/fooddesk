@@ -92,7 +92,7 @@
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <template x-for="(category, index) in categories" :key="category.id">
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-2 whitespace-nowrap">
                                     <div class="flex items-center gap-2">
                                         <button @click="moveUp(index)"
                                                 :disabled="index === 0"
@@ -111,13 +111,13 @@
                                         </button>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-2 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100" x-text="category.name"></div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-6 py-2">
                                     <div class="text-sm text-gray-500 dark:text-gray-400" x-text="category.description || '-'"></div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <td class="px-6 py-2 whitespace-nowrap text-center">
                                     <span x-show="category.is_active" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
                                         Ativo
                                     </span>
@@ -125,7 +125,7 @@
                                         Inativo
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <td class="px-6 py-2 whitespace-nowrap text-center text-sm font-medium">
                                     <div class="flex items-center justify-center gap-1">
                                         <button type="button"
                                                 @click="$dispatch('open-category-modal', { mode: 'edit', category: category })"
@@ -396,10 +396,11 @@
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                 class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl flex flex-col"
+                 style="height: 500px;">
 
                 <!-- Header -->
-                <div class="bg-white dark:bg-gray-800 px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-800 px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Histórico de Alterações</h3>
@@ -417,7 +418,7 @@
                 </div>
 
                 <!-- Content -->
-                <div class="bg-white dark:bg-gray-800 px-6 py-4 max-h-96 overflow-y-auto">
+                <div class="bg-white dark:bg-gray-800 px-6 py-4 flex-1 overflow-y-auto">
                     <!-- Loading -->
                     <div x-show="loading" class="flex justify-center py-8">
                         <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
@@ -462,7 +463,7 @@
                 </div>
 
                 <!-- Footer with Pagination -->
-                <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex items-center justify-between">
+                <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex items-center justify-between flex-shrink-0">
                     <div class="text-sm text-gray-500 dark:text-gray-400" x-show="pagination.total > 0">
                         Página <span x-text="pagination.current_page"></span> de <span x-text="pagination.last_page"></span>
                     </div>

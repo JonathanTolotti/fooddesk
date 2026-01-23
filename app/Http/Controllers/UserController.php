@@ -102,4 +102,30 @@ class UserController extends Controller
         return Redirect::route('users.index')
             ->with('success', "Usuário {$status} com sucesso.");
     }
+
+    public function history(Request $request, User $user): JsonResponse
+    {
+        $perPage = $request->input('per_page', 10);
+        $histories = $user->histories()->with('user')->paginate($perPage);
+
+        return response()->json([
+            'histories' => $histories->getCollection()->map(fn ($history) => [
+                'id' => $history->id,
+                'event' => $history->event,
+                'field' => $history->field,
+                'field_label' => $history->field_label,
+                'old_value' => $history->formatted_old_value,
+                'new_value' => $history->formatted_new_value,
+                'user_name' => $history->user?->name ?? 'Sistema',
+                'created_at' => $history->created_at->format('d/m/Y H:i'),
+            ]),
+            'pagination' => [
+                'current_page' => $histories->currentPage(),
+                'last_page' => $histories->lastPage(),
+                'per_page' => $histories->perPage(),
+                'total' => $histories->total(),
+                'has_more' => $histories->hasMorePages(),
+            ],
+        ]);
+    }
 }

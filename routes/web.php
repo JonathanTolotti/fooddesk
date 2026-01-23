@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
         Route::post('users/filter', [UserController::class, 'filter'])->name('users.filter');
         Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::get('users/{user}/history', [UserController::class, 'history'])->name('users.history');
     });
 });
 
