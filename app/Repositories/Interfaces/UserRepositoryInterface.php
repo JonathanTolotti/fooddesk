@@ -25,5 +25,4 @@ interface UserRepositoryInterface
     public function restore(User $user): bool;
 
     public function filterByRole(?UserRole $role, int $perPage = 15): LengthAwarePaginator;
-
 }

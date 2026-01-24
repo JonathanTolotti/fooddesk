@@ -19,10 +19,10 @@
                                 <x-nav-dropdown-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
                                     Categorias
                                 </x-nav-dropdown-link>
-                                <x-nav-dropdown-link href="#" :active="request()->routeIs('products.*')">
+                                <x-nav-dropdown-link :href="route('products.index')" :active="request()->routeIs('products.*')">
                                     Produtos
                                 </x-nav-dropdown-link>
-                                <x-nav-dropdown-link href="#" :active="request()->routeIs('ingredients.*')">
+                                <x-nav-dropdown-link :href="route('ingredients.index')" :active="request()->routeIs('ingredients.*')">
                                     Ingredientes
                                 </x-nav-dropdown-link>
                             </x-slot>
@@ -126,10 +126,10 @@
                     <x-responsive-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
                         Categorias
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link href="#" :active="request()->routeIs('products.*')">
+                    <x-responsive-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
                         Produtos
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link href="#" :active="request()->routeIs('ingredients.*')">
+                    <x-responsive-nav-link :href="route('ingredients.index')" :active="request()->routeIs('ingredients.*')">
                         Ingredientes
                     </x-responsive-nav-link>
                 </div>

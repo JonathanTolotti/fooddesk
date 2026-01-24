@@ -18,7 +18,7 @@ class CheckRole
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             abort(401, 'Não autenticado.');
         }
 
@@ -28,7 +28,7 @@ class CheckRole
             $roles
         );
 
-        if (!$user->hasRole(...$allowedRoles)) {
+        if (! $user->hasRole(...$allowedRoles)) {
             abort(403, 'Você não tem permissão para acessar esta página.');
         }
 

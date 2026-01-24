@@ -359,7 +359,7 @@
                 </div>
 
                 <!-- Content -->
-                <div class="bg-white dark:bg-gray-800 px-6 py-4 flex-1 overflow-y-auto">
+                <div class="bg-white dark:bg-gray-800 px-6 py-4 flex-1 overflow-y-auto custom-scrollbar">
                     <!-- Loading -->
                     <div x-show="loading" class="flex justify-center py-8">
                         <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">

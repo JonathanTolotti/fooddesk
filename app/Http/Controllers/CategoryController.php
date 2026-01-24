@@ -24,10 +24,15 @@ class CategoryController extends Controller
     public function filter(Request $request): JsonResponse
     {
         $filters = $request->only(['search', 'status']);
-        $categories = $this->categoryService->filter($filters);
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+
+        request()->merge(['page' => $page]);
+
+        $categories = $this->categoryService->filter($filters, $perPage);
 
         return response()->json([
-            'categories' => $categories->map(fn (Category $category) => [
+            'categories' => $categories->getCollection()->map(fn (Category $category) => [
                 'id' => $category->id,
                 'uuid' => $category->uuid,
                 'name' => $category->name,
@@ -35,6 +40,12 @@ class CategoryController extends Controller
                 'is_active' => $category->is_active,
                 'sort_order' => $category->sort_order,
             ]),
+            'pagination' => [
+                'current_page' => $categories->currentPage(),
+                'last_page' => $categories->lastPage(),
+                'per_page' => $categories->perPage(),
+                'total' => $categories->total(),
+            ],
         ]);
     }
 

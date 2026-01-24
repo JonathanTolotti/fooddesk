@@ -27,15 +27,15 @@ class CategoryRepository implements CategoryRepositoryInterface
             ->paginate($perPage);
     }
 
-    public function filter(array $filters): Collection
+    public function filter(array $filters, int $perPage = 10): LengthAwarePaginator
     {
         $query = $this->model->query();
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -44,7 +44,7 @@ class CategoryRepository implements CategoryRepositoryInterface
             $query->where('is_active', $isActive);
         }
 
-        return $query->orderBy('sort_order')->get();
+        return $query->orderBy('sort_order')->paginate($perPage);
     }
 
     public function findByUuid(string $uuid): ?Category

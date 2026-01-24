@@ -5,8 +5,12 @@ namespace App\Providers;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\CategoryRepository;
+use App\Repositories\IngredientRepository;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
+use App\Repositories\Interfaces\IngredientRepositoryInterface;
+use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Repositories\ProductRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +30,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             CategoryRepositoryInterface::class,
             CategoryRepository::class
+        );
+
+        $this->app->bind(
+            ProductRepositoryInterface::class,
+            ProductRepository::class
+        );
+
+        $this->app->bind(
+            IngredientRepositoryInterface::class,
+            IngredientRepository::class
         );
     }
 

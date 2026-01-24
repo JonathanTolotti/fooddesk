@@ -2,23 +2,26 @@
 
 namespace App\Observers;
 
-use App\Models\Category;
-use App\Models\CategoryHistory;
+use App\Models\Product;
+use App\Models\ProductHistory;
 use Illuminate\Support\Facades\Auth;
 
-class CategoryObserver
+class ProductObserver
 {
     protected array $auditableFields = [
         'name',
         'description',
+        'price',
+        'category_id',
+        'image',
         'is_active',
         'sort_order',
     ];
 
-    public function created(Category $category): void
+    public function created(Product $product): void
     {
-        CategoryHistory::create([
-            'category_id' => $category->id,
+        ProductHistory::create([
+            'product_id' => $product->id,
             'event' => 'created',
             'field' => null,
             'old_value' => null,
@@ -28,16 +31,15 @@ class CategoryObserver
         ]);
     }
 
-    public function updated(Category $category): void
+    public function updated(Product $product): void
     {
-        $changes = $category->getChanges();
+        $changes = $product->getChanges();
 
         foreach ($this->auditableFields as $field) {
             if (array_key_exists($field, $changes)) {
-                $oldValue = $category->getOriginal($field);
+                $oldValue = $product->getOriginal($field);
                 $newValue = $changes[$field];
 
-                // Converte boolean para string para armazenamento
                 if (is_bool($oldValue)) {
                     $oldValue = $oldValue ? '1' : '0';
                 }
@@ -45,8 +47,8 @@ class CategoryObserver
                     $newValue = $newValue ? '1' : '0';
                 }
 
-                CategoryHistory::create([
-                    'category_id' => $category->id,
+                ProductHistory::create([
+                    'product_id' => $product->id,
                     'event' => 'updated',
                     'field' => $field,
                     'old_value' => $oldValue,
@@ -58,10 +60,10 @@ class CategoryObserver
         }
     }
 
-    public function deleted(Category $category): void
+    public function deleted(Product $product): void
     {
-        CategoryHistory::create([
-            'category_id' => $category->id,
+        ProductHistory::create([
+            'product_id' => $product->id,
             'event' => 'deleted',
             'field' => null,
             'old_value' => null,

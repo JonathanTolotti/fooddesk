@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
-use App\Observers\CategoryObserver;
+use App\Observers\ProductObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
-#[ObservedBy(CategoryObserver::class)]
-class Category extends Model
+#[ObservedBy(ProductObserver::class)]
+class Product extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -19,6 +21,9 @@ class Category extends Model
         'uuid',
         'name',
         'description',
+        'price',
+        'category_id',
+        'image',
         'is_active',
         'sort_order',
     ];
@@ -27,9 +32,9 @@ class Category extends Model
     {
         parent::boot();
 
-        static::creating(function (Category $category): void {
-            if (empty($category->uuid)) {
-                $category->uuid = Str::uuid();
+        static::creating(function (Product $product): void {
+            if (empty($product->uuid)) {
+                $product->uuid = Str::uuid();
             }
         });
     }
@@ -42,13 +47,26 @@ class Category extends Model
     protected function casts(): array
     {
         return [
+            'price' => 'decimal:2',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
     }
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function histories(): HasMany
     {
-        return $this->hasMany(CategoryHistory::class)->orderByDesc('created_at');
+        return $this->hasMany(ProductHistory::class)->orderByDesc('created_at');
+    }
+
+    public function ingredients(): BelongsToMany
+    {
+        return $this->belongsToMany(Ingredient::class, 'product_ingredient')
+            ->withPivot(['type', 'quantity', 'additional_price'])
+            ->withTimestamps();
     }
 }

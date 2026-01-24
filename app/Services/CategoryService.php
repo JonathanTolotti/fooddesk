@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Category;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class CategoryService
@@ -17,9 +18,9 @@ class CategoryService
         return $this->repository->all();
     }
 
-    public function filter(array $filters): Collection
+    public function filter(array $filters, int $perPage = 10): LengthAwarePaginator
     {
-        return $this->repository->filter($filters);
+        return $this->repository->filter($filters, $perPage);
     }
 
     public function findByUuid(string $uuid): ?Category
@@ -47,7 +48,7 @@ class CategoryService
     public function toggleStatus(Category $category): Category
     {
         return $this->repository->update($category, [
-            'is_active' => !$category->is_active,
+            'is_active' => ! $category->is_active,
         ]);
     }
 

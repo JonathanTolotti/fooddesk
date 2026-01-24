@@ -12,7 +12,7 @@ interface CategoryRepositoryInterface
 
     public function paginate(int $perPage = 15): LengthAwarePaginator;
 
-    public function filter(array $filters): Collection;
+    public function filter(array $filters, int $perPage = 10): LengthAwarePaginator;
 
     public function findByUuid(string $uuid): ?Category;
 

@@ -8,10 +8,10 @@ use App\Repositories\Interfaces\UserRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserRepository implements UserRepositoryInterface
-{    public function __construct(
+{
+    public function __construct(
         private readonly User $model
     ) {}
-
 
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
