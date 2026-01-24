@@ -11,7 +11,7 @@
 
                     @can('manage-products')
                         <!-- Menu Cadastros -->
-                        <x-nav-dropdown :active="request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('ingredients.*')">
+                        <x-nav-dropdown :active="request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('ingredients.*') || request()->routeIs('tables.*')">
                             <x-slot name="trigger">
                                 Cadastros
                             </x-slot>
@@ -24,6 +24,9 @@
                                 </x-nav-dropdown-link>
                                 <x-nav-dropdown-link :href="route('ingredients.index')" :active="request()->routeIs('ingredients.*')">
                                     Ingredientes
+                                </x-nav-dropdown-link>
+                                <x-nav-dropdown-link :href="route('tables.index')" :active="request()->routeIs('tables.*')">
+                                    Mesas
                                 </x-nav-dropdown-link>
                             </x-slot>
                         </x-nav-dropdown>
@@ -116,7 +119,7 @@
             <!-- Menu Cadastros (Mobile) -->
             <div x-data="{ openCadastros: false }">
                 <button @click="openCadastros = !openCadastros"
-                        class="w-full flex items-center justify-between ps-3 pe-4 py-2 border-l-4 {{ request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('ingredients.*') ? 'border-indigo-400 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/50' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600' }} text-start text-base font-medium transition duration-150 ease-in-out">
+                        class="w-full flex items-center justify-between ps-3 pe-4 py-2 border-l-4 {{ request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('ingredients.*') || request()->routeIs('tables.*') ? 'border-indigo-400 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/50' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600' }} text-start text-base font-medium transition duration-150 ease-in-out">
                     <span>Cadastros</span>
                     <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-180': openCadastros }" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -131,6 +134,9 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('ingredients.index')" :active="request()->routeIs('ingredients.*')">
                         Ingredientes
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('tables.index')" :active="request()->routeIs('tables.*')">
+                        Mesas
                     </x-responsive-nav-link>
                 </div>
             </div>

@@ -9,8 +9,10 @@ use App\Repositories\IngredientRepository;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use App\Repositories\Interfaces\IngredientRepositoryInterface;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
+use App\Repositories\Interfaces\TableRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Repositories\ProductRepository;
+use App\Repositories\TableRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -40,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             IngredientRepositoryInterface::class,
             IngredientRepository::class
+        );
+
+        $this->app->bind(
+            TableRepositoryInterface::class,
+            TableRepository::class
         );
     }
 

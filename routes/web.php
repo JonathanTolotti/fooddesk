@@ -4,6 +4,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TableController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +46,16 @@ Route::middleware('auth')->group(function () {
         Route::delete('/ingredients/{ingredient}', [IngredientController::class, 'destroy'])->name('ingredients.destroy');
         Route::patch('/ingredients/{ingredient}/toggle-status', [IngredientController::class, 'toggleStatus'])->name('ingredients.toggle-status');
         Route::get('/ingredients/{ingredient}/history', [IngredientController::class, 'history'])->name('ingredients.history');
+
+        // Tables
+        Route::get('/tables', [TableController::class, 'index'])->name('tables.index');
+        Route::post('/tables/filter', [TableController::class, 'filter'])->name('tables.filter');
+        Route::post('/tables', [TableController::class, 'store'])->name('tables.store');
+        Route::put('/tables/{table}', [TableController::class, 'update'])->name('tables.update');
+        Route::delete('/tables/{table}', [TableController::class, 'destroy'])->name('tables.destroy');
+        Route::patch('/tables/{table}/toggle-status', [TableController::class, 'toggleStatus'])->name('tables.toggle-status');
+        Route::patch('/tables/{table}/change-status', [TableController::class, 'changeStatus'])->name('tables.change-status');
+        Route::get('/tables/{table}/history', [TableController::class, 'history'])->name('tables.history');
     });
 
     // Sistema (Users)
