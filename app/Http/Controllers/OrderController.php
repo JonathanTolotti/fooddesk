@@ -129,7 +129,8 @@ class OrderController extends Controller
     {
         $order = $this->orderService->createFromTable(
             $table,
-            $request->input('customer_name')
+            $request->input('customer_name'),
+            $request->input('customer_id')
         );
 
         return response()->json([

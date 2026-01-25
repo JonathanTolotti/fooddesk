@@ -68,9 +68,9 @@ class OrderService
     /**
      * Create order from table (quick open)
      */
-    public function createFromTable(Table $table, ?string $customerName = null): Order
+    public function createFromTable(Table $table, ?string $customerName = null, ?int $customerId = null): Order
     {
-        return DB::transaction(function () use ($table, $customerName) {
+        return DB::transaction(function () use ($table, $customerName, $customerId) {
             // Lock table row to prevent race condition
             $table = Table::lockForUpdate()->find($table->id);
 
@@ -82,6 +82,7 @@ class OrderService
 
             return $this->create([
                 'table_id' => $table->id,
+                'customer_id' => $customerId,
                 'type' => 'dine_in',
                 'customer_name' => $customerName,
             ]);

@@ -51,4 +51,9 @@ class Category extends Model
     {
         return $this->hasMany(CategoryHistory::class)->orderByDesc('created_at');
     }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
 }

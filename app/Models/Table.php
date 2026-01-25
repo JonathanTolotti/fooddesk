@@ -22,6 +22,8 @@ class Table extends Model
         'capacity',
         'status',
         'is_active',
+        'calling_waiter',
+        'called_waiter_at',
     ];
 
     protected static function boot(): void
@@ -44,6 +46,8 @@ class Table extends Model
     {
         return [
             'is_active' => 'boolean',
+            'calling_waiter' => 'boolean',
+            'called_waiter_at' => 'datetime',
             'number' => 'integer',
             'capacity' => 'integer',
         ];

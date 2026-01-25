@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Table;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
@@ -81,8 +82,42 @@ class WaiterController extends Controller
             ];
         });
 
+        // Get tables calling waiter
+        $callingTables = Table::where('calling_waiter', true)
+            ->where('is_active', true)
+            ->orderBy('called_waiter_at')
+            ->get()
+            ->map(function ($table) {
+                return [
+                    'id' => $table->id,
+                    'uuid' => $table->uuid,
+                    'number' => $table->number,
+                    'name' => $table->name,
+                    'called_at' => $table->called_waiter_at?->format('H:i'),
+                    'waiting_minutes' => $table->called_waiter_at
+                        ? (int) $table->called_waiter_at->diffInMinutes(now())
+                        : 0,
+                ];
+            });
+
         return response()->json([
             'orders' => $ordersData,
+            'calling_tables' => $callingTables,
+        ]);
+    }
+
+    /**
+     * Acknowledge waiter call (dismiss the alert)
+     */
+    public function acknowledgeCall(Table $table): JsonResponse
+    {
+        $table->update([
+            'calling_waiter' => false,
+            'called_waiter_at' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Chamada atendida.',
         ]);
     }
 }

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CustomerMenuController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
@@ -8,6 +10,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReceptionController;
 use App\Http\Controllers\TableController;
+use App\Http\Controllers\TableQrCodeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WaiterController;
 use Illuminate\Support\Facades\Route;
@@ -16,10 +19,26 @@ Route::get('/', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Public routes - Customer Self-Service
+Route::prefix('menu/{tableUuid}')->group(function () {
+    Route::get('/', [CustomerMenuController::class, 'index'])->name('customer.menu');
+    Route::post('/search-customer', [CustomerMenuController::class, 'searchCustomer'])->name('customer.search');
+    Route::post('/register-customer', [CustomerMenuController::class, 'registerCustomer'])->name('customer.register');
+    Route::get('/order', [CustomerMenuController::class, 'getOrder'])->name('customer.order');
+    Route::post('/items', [CustomerMenuController::class, 'addItem'])->name('customer.items.add');
+    Route::delete('/items/{itemId}', [CustomerMenuController::class, 'removeItem'])->name('customer.items.remove');
+    Route::post('/send-to-kitchen', [CustomerMenuController::class, 'sendToKitchen'])->name('customer.send-to-kitchen');
+    Route::post('/call-waiter', [CustomerMenuController::class, 'callWaiter'])->name('customer.call-waiter');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Customers (for reception)
+    Route::post('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
+    Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
 
     // Recepção (Tables Grid)
     Route::middleware('can:manage-orders')->group(function () {
@@ -31,6 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:manage-orders')->group(function () {
         Route::get('/waiter', [WaiterController::class, 'index'])->name('waiter.index');
         Route::get('/waiter/orders', [WaiterController::class, 'orders'])->name('waiter.orders');
+        Route::post('/waiter/tables/{table}/acknowledge', [WaiterController::class, 'acknowledgeCall'])->name('waiter.acknowledge');
     });
 
     // Cozinha (Kitchen Display)
@@ -80,6 +100,11 @@ Route::middleware('auth')->group(function () {
         Route::patch('/tables/{table}/toggle-status', [TableController::class, 'toggleStatus'])->name('tables.toggle-status');
         Route::patch('/tables/{table}/change-status', [TableController::class, 'changeStatus'])->name('tables.change-status');
         Route::get('/tables/{table}/history', [TableController::class, 'history'])->name('tables.history');
+
+        // QR Codes
+        Route::get('/tables/qrcodes', [TableQrCodeController::class, 'index'])->name('tables.qrcodes');
+        Route::get('/tables/{table}/qrcode', [TableQrCodeController::class, 'show'])->name('tables.qrcode.show');
+        Route::get('/tables/{table}/qrcode/download', [TableQrCodeController::class, 'download'])->name('tables.qrcode.download');
     });
 
     // Pedidos (Orders)

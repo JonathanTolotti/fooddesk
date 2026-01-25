@@ -40,8 +40,11 @@
                                 <x-nav-dropdown-link :href="route('ingredients.index')" :active="request()->routeIs('ingredients.*')">
                                     Ingredientes
                                 </x-nav-dropdown-link>
-                                <x-nav-dropdown-link :href="route('tables.index')" :active="request()->routeIs('tables.*')">
+                                <x-nav-dropdown-link :href="route('tables.index')" :active="request()->routeIs('tables.index')">
                                     Mesas
+                                </x-nav-dropdown-link>
+                                <x-nav-dropdown-link :href="route('tables.qrcodes')" :active="request()->routeIs('tables.qrcodes')">
+                                    QR Codes
                                 </x-nav-dropdown-link>
                             </x-slot>
                         </x-nav-dropdown>
@@ -165,8 +168,11 @@
                     <x-responsive-nav-link :href="route('ingredients.index')" :active="request()->routeIs('ingredients.*')">
                         Ingredientes
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('tables.index')" :active="request()->routeIs('tables.*')">
+                    <x-responsive-nav-link :href="route('tables.index')" :active="request()->routeIs('tables.index')">
                         Mesas
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('tables.qrcodes')" :active="request()->routeIs('tables.qrcodes')">
+                        QR Codes
                     </x-responsive-nav-link>
                 </div>
             </div>

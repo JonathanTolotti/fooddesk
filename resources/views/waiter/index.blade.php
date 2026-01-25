@@ -42,6 +42,32 @@
             </svg>
         </div>
 
+        <!-- Waiter Call Alerts -->
+        <div x-show="!loading && callingTables.length > 0" class="mb-6">
+            <div class="bg-red-600 rounded-lg shadow-lg p-4 animate-pulse">
+                <div class="flex items-center gap-3 mb-3">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <span class="text-white font-bold text-lg">Chamando Garçom!</span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="table in callingTables" :key="table.id">
+                        <div class="bg-white rounded-lg px-4 py-2 flex items-center gap-3">
+                            <div>
+                                <span class="font-bold text-gray-900">Mesa <span x-text="table.number"></span></span>
+                                <span class="text-sm text-gray-500 ml-2" x-text="'há ' + table.waiting_minutes + ' min'"></span>
+                            </div>
+                            <button @click="acknowledgeCall(table)"
+                                    class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">
+                                Atender
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
         <!-- Summary Cards -->
         <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
@@ -209,6 +235,7 @@
             return {
                 loading: true,
                 orders: [],
+                callingTables: [],
                 message: { text: '', type: 'success' },
 
                 get totalPendingItems() {
@@ -227,6 +254,27 @@
                     this.loadOrders();
                     // Refresh every 15 seconds
                     setInterval(() => this.loadOrders(), 15000);
+
+                    // Play sound when new calls arrive
+                    this.$watch('callingTables', (newVal, oldVal) => {
+                        if (newVal.length > oldVal.length) {
+                            this.playAlertSound();
+                        }
+                    });
+                },
+
+                playAlertSound() {
+                    // Simple beep sound
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
                 },
 
                 formatDuration(minutes) {
@@ -249,10 +297,30 @@
                             if (a.items_summary.ready === 0 && b.items_summary.ready > 0) return 1;
                             return 0;
                         });
+                        // Load calling tables
+                        this.callingTables = data.calling_tables || [];
                     } catch (error) {
                         console.error('Erro ao carregar pedidos:', error);
                     } finally {
                         this.loading = false;
+                    }
+                },
+
+                async acknowledgeCall(table) {
+                    try {
+                        const response = await fetch('/waiter/tables/' + table.uuid + '/acknowledge', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (response.ok) {
+                            this.callingTables = this.callingTables.filter(t => t.id !== table.id);
+                            this.showMessage('Chamada da Mesa ' + table.number + ' atendida');
+                        }
+                    } catch (error) {
+                        this.showMessage('Erro ao atender chamada', 'error');
                     }
                 },
 

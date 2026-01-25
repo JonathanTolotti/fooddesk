@@ -128,7 +128,7 @@
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
                  class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80 transition-opacity"
-                 @click="showOpenOrderModal = false"></div>
+                 @click="closeModal()"></div>
 
             <div class="flex min-h-full items-center justify-center p-4">
                 <div x-show="showOpenOrderModal"
@@ -150,35 +150,117 @@
                             </div>
                         </div>
 
-                        <div class="space-y-4">
+                        <!-- Step 1: Phone Search -->
+                        <div x-show="modalStep === 'phone'" class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Nome do Cliente <span class="text-gray-400">(opcional)</span>
+                                    Telefone do Cliente
                                 </label>
-                                <input type="text"
-                                       x-model="customerName"
-                                       @keydown.enter="openOrder()"
-                                       placeholder="Ex: João Silva"
+                                <input type="tel"
+                                       x-model="customerPhone"
+                                       @keydown.enter="searchCustomer()"
+                                       x-mask="(99) 99999-9999"
+                                       placeholder="(00) 00000-0000"
                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
                             </div>
+                            <p x-show="modalError" x-text="modalError" class="text-red-500 text-sm"></p>
+                        </div>
+
+                        <!-- Step 2: Customer Found -->
+                        <div x-show="modalStep === 'found'" class="space-y-4">
+                            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold" x-text="customer?.name?.charAt(0)?.toUpperCase()"></div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-gray-100" x-text="customer?.name"></p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400" x-text="customer?.phone"></p>
+                                    </div>
+                                </div>
+                                <div x-show="customer?.is_birthday" class="mt-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-md p-2 text-center">
+                                    <span class="text-yellow-800 dark:text-yellow-300 text-sm font-medium">Hoje é aniversário!</span>
+                                </div>
+                            </div>
+                            <button @click="modalStep = 'phone'; customer = null; customerPhone = ''"
+                                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                                Buscar outro cliente
+                            </button>
+                        </div>
+
+                        <!-- Step 3: Register New Customer -->
+                        <div x-show="modalStep === 'register'" class="space-y-4">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Cliente não encontrado. Cadastre um novo:</p>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome *</label>
+                                <input type="text"
+                                       x-model="registerForm.name"
+                                       placeholder="Nome completo"
+                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone</label>
+                                <input type="tel"
+                                       x-model="customerPhone"
+                                       disabled
+                                       class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Nascimento</label>
+                                <input type="date"
+                                       x-model="registerForm.birth_date"
+                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                            <p x-show="modalError" x-text="modalError" class="text-red-500 text-sm"></p>
+                            <button @click="modalStep = 'phone'; customerPhone = ''"
+                                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                                Voltar
+                            </button>
                         </div>
                     </div>
 
                     <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3">
                         <button type="button"
-                                @click="showOpenOrderModal = false"
+                                @click="closeModal()"
                                 class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors duration-200">
                             Cancelar
                         </button>
-                        <button type="button"
+
+                        <!-- Phone Step Button -->
+                        <button x-show="modalStep === 'phone'"
+                                type="button"
+                                @click="searchCustomer()"
+                                :disabled="searching || customerPhone.length < 14"
+                                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 rounded-md transition-colors duration-200 flex items-center gap-2">
+                            <svg x-show="searching" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span x-text="searching ? 'Buscando...' : 'Buscar Cliente'"></span>
+                        </button>
+
+                        <!-- Found Step Button -->
+                        <button x-show="modalStep === 'found'"
+                                type="button"
                                 @click="openOrder()"
                                 :disabled="savingOrder"
                                 class="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 rounded-md transition-colors duration-200 flex items-center gap-2">
-                            <svg x-show="savingOrder" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg x-show="savingOrder" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
                             <span x-text="savingOrder ? 'Abrindo...' : 'Abrir Pedido'"></span>
+                        </button>
+
+                        <!-- Register Step Button -->
+                        <button x-show="modalStep === 'register'"
+                                type="button"
+                                @click="registerAndOpenOrder()"
+                                :disabled="savingOrder || !registerForm.name"
+                                class="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 rounded-md transition-colors duration-200 flex items-center gap-2">
+                            <svg x-show="savingOrder" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span x-text="savingOrder ? 'Cadastrando...' : 'Cadastrar e Abrir'"></span>
                         </button>
                     </div>
                 </div>
@@ -194,8 +276,16 @@
                 message: { text: '', type: 'success' },
                 showOpenOrderModal: false,
                 selectedTable: null,
-                customerName: '',
+                modalStep: 'phone', // phone, found, register
+                customerPhone: '',
+                customer: null,
+                searching: false,
                 savingOrder: false,
+                modalError: '',
+                registerForm: {
+                    name: '',
+                    birth_date: '',
+                },
 
                 init() {
                     this.loadTables();
@@ -238,12 +328,98 @@
                     } else if (table.status === 'available') {
                         // Open modal to create order
                         this.selectedTable = table;
-                        this.customerName = '';
+                        this.resetModal();
                         this.showOpenOrderModal = true;
                     } else if (table.status === 'reserved') {
                         this.showMessage('Mesa reservada. Altere o status para abrir um pedido.', 'error');
                     } else if (table.status === 'cleaning') {
                         this.showMessage('Mesa em limpeza. Aguarde a liberação.', 'error');
+                    }
+                },
+
+                resetModal() {
+                    this.modalStep = 'phone';
+                    this.customerPhone = '';
+                    this.customer = null;
+                    this.modalError = '';
+                    this.registerForm = { name: '', birth_date: '' };
+                },
+
+                closeModal() {
+                    this.showOpenOrderModal = false;
+                    this.resetModal();
+                },
+
+                async searchCustomer() {
+                    if (this.customerPhone.length < 14) {
+                        this.modalError = 'Digite um telefone válido';
+                        return;
+                    }
+
+                    this.searching = true;
+                    this.modalError = '';
+
+                    try {
+                        const response = await fetch('{{ route('customers.search') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ phone: this.customerPhone })
+                        });
+                        const data = await response.json();
+
+                        if (data.found) {
+                            this.customer = data.customer;
+                            this.modalStep = 'found';
+                        } else {
+                            this.modalStep = 'register';
+                        }
+                    } catch (error) {
+                        this.modalError = 'Erro ao buscar cliente';
+                    } finally {
+                        this.searching = false;
+                    }
+                },
+
+                async registerAndOpenOrder() {
+                    if (!this.registerForm.name) {
+                        this.modalError = 'Informe o nome do cliente';
+                        return;
+                    }
+
+                    this.savingOrder = true;
+                    this.modalError = '';
+
+                    try {
+                        // Register customer first
+                        const registerResponse = await fetch('{{ route('customers.store') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name: this.registerForm.name,
+                                phone: this.customerPhone,
+                                birth_date: this.registerForm.birth_date || null
+                            })
+                        });
+                        const registerData = await registerResponse.json();
+
+                        if (registerResponse.ok) {
+                            this.customer = registerData.customer;
+                            await this.openOrder();
+                        } else {
+                            this.modalError = registerData.message || 'Erro ao cadastrar cliente';
+                            this.savingOrder = false;
+                        }
+                    } catch (error) {
+                        this.modalError = 'Erro ao cadastrar cliente';
+                        this.savingOrder = false;
                     }
                 },
 
@@ -258,7 +434,8 @@
                                 'Accept': 'application/json'
                             },
                             body: JSON.stringify({
-                                customer_name: this.customerName || null
+                                customer_id: this.customer?.id || null,
+                                customer_name: this.customer?.name || null
                             })
                         });
                         const data = await response.json();
