@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\IngredientController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TableController;
@@ -56,6 +57,39 @@ Route::middleware('auth')->group(function () {
         Route::patch('/tables/{table}/toggle-status', [TableController::class, 'toggleStatus'])->name('tables.toggle-status');
         Route::patch('/tables/{table}/change-status', [TableController::class, 'changeStatus'])->name('tables.change-status');
         Route::get('/tables/{table}/history', [TableController::class, 'history'])->name('tables.history');
+    });
+
+    // Pedidos (Orders)
+    Route::middleware('can:manage-orders')->group(function () {
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::post('/orders/filter', [OrderController::class, 'filter'])->name('orders.filter');
+        Route::get('/orders/open', [OrderController::class, 'openOrders'])->name('orders.open');
+        Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+        Route::post('/orders/from-table/{table}', [OrderController::class, 'openFromTable'])->name('orders.from-table');
+
+        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{order}/data', [OrderController::class, 'getData'])->name('orders.data');
+        Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+        Route::get('/orders/{order}/history', [OrderController::class, 'history'])->name('orders.history');
+        Route::get('/orders/{order}/receipt', [OrderController::class, 'receipt'])->name('orders.receipt');
+
+        // Order Items
+        Route::post('/orders/{order}/items', [OrderController::class, 'addItem'])->name('orders.items.add');
+        Route::put('/orders/{order}/items/{item}', [OrderController::class, 'updateItem'])->name('orders.items.update');
+        Route::delete('/orders/{order}/items/{item}/cancel', [OrderController::class, 'cancelItem'])->name('orders.items.cancel');
+        Route::post('/orders/{order}/send-to-kitchen', [OrderController::class, 'sendToKitchen'])->name('orders.send-to-kitchen');
+        Route::patch('/orders/{order}/items/{item}/ready', [OrderController::class, 'markItemReady'])->name('orders.items.ready');
+        Route::patch('/orders/{order}/items/{item}/delivered', [OrderController::class, 'markItemDelivered'])->name('orders.items.delivered');
+
+        // Payments
+        Route::post('/orders/{order}/payments', [OrderController::class, 'addPayment'])->name('orders.payments.add');
+        Route::delete('/orders/{order}/payments/{payment}', [OrderController::class, 'removePayment'])->name('orders.payments.remove');
+
+        // Order Actions
+        Route::post('/orders/{order}/discount', [OrderController::class, 'applyDiscount'])->name('orders.discount');
+        Route::post('/orders/{order}/close', [OrderController::class, 'close'])->name('orders.close');
+        Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+        Route::post('/orders/{order}/transfer', [OrderController::class, 'transfer'])->name('orders.transfer');
     });
 
     // Sistema (Users)

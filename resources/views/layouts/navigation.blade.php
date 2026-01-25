@@ -9,6 +9,12 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
+                    @can('manage-orders')
+                        <x-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
+                            Pedidos
+                        </x-nav-link>
+                    @endcan
+
                     @can('manage-products')
                         <!-- Menu Cadastros -->
                         <x-nav-dropdown :active="request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('ingredients.*') || request()->routeIs('tables.*')">
@@ -115,6 +121,12 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @can('manage-orders')
+                <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
+                    Pedidos
+                </x-responsive-nav-link>
+            @endcan
 
             <!-- Menu Cadastros (Mobile) -->
             <div x-data="{ openCadastros: false }">
