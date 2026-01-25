@@ -29,6 +29,7 @@ class Order extends Model
         'external_data',
         'subtotal',
         'discount',
+        'service_fee',
         'total',
         'notes',
         'opened_at',
@@ -59,6 +60,7 @@ class Order extends Model
         return [
             'subtotal' => 'decimal:2',
             'discount' => 'decimal:2',
+            'service_fee' => 'decimal:2',
             'total' => 'decimal:2',
             'external_data' => 'array',
             'opened_at' => 'datetime',
@@ -191,7 +193,29 @@ class Order extends Model
             ->sum('total_price');
 
         $this->subtotal = $subtotal;
-        $this->total = max(0, $subtotal - $this->discount);
+
+        // Recalculate service fee if it's active (10% of new subtotal)
+        if ($this->service_fee > 0) {
+            $this->service_fee = $this->calculateServiceFee();
+        }
+
+        $this->total = max(0, $subtotal - $this->discount + $this->service_fee);
         $this->save();
+    }
+
+    /**
+     * Check if service fee is applied
+     */
+    public function hasServiceFee(): bool
+    {
+        return $this->service_fee > 0;
+    }
+
+    /**
+     * Calculate service fee based on subtotal (10%)
+     */
+    public function calculateServiceFee(): float
+    {
+        return round($this->subtotal * 0.10, 2);
     }
 }

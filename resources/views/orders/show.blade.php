@@ -132,6 +132,9 @@
 
                                 <!-- Item Actions -->
                                 <div x-show="order.status === 'open'" class="mt-2 flex items-center gap-2">
+                                    <template x-if="item.status !== 'cancelled'">
+                                        <button @click="editItem(item)" class="text-xs text-purple-600 dark:text-purple-400 hover:underline">Editar</button>
+                                    </template>
                                     <template x-if="item.status === 'pending'">
                                         <button @click="sendItemToKitchen(item)" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Enviar p/ Cozinha</button>
                                     </template>
@@ -192,6 +195,23 @@
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600 dark:text-gray-400">Desconto</span>
                             <span class="text-red-600 dark:text-red-400" x-text="'- R$ ' + order.discount.toFixed(2).replace('.', ',')"></span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-600 dark:text-gray-400">Taxa de Serviço (10%)</span>
+                                @if($order->isOpen())
+                                    <button @click="toggleServiceFee()"
+                                            :disabled="savingServiceFee"
+                                            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                            :class="order.service_fee > 0 ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'"
+                                            role="switch"
+                                            :aria-checked="order.service_fee > 0">
+                                        <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                              :class="order.service_fee > 0 ? 'translate-x-4' : 'translate-x-0'"></span>
+                                    </button>
+                                @endif
+                            </div>
+                            <span class="text-green-600 dark:text-green-400" x-text="'+ R$ ' + order.service_fee.toFixed(2).replace('.', ',')"></span>
                         </div>
                         <div class="flex justify-between text-lg font-bold border-t border-gray-200 dark:border-gray-700 pt-3">
                             <span class="text-gray-900 dark:text-gray-100">Total</span>
@@ -292,6 +312,9 @@
         <!-- Modal Adicionar Item -->
         @include('orders.partials.add-item-modal', ['categories' => $categories])
 
+        <!-- Modal Editar Item -->
+        @include('orders.partials.edit-item-modal')
+
         <!-- Modal Pagamento -->
         @include('orders.partials.payment-modal')
 
@@ -334,6 +357,9 @@
                 // Discount modal
                 discountAmount: 0,
                 savingDiscount: false,
+
+                // Service fee
+                savingServiceFee: false,
 
                 // Cancel modal
                 cancelReason: '',
@@ -518,6 +544,10 @@
                     }
                 },
 
+                editItem(item) {
+                    this.$dispatch('open-edit-item-modal', item);
+                },
+
                 cancelItem(item) {
                     this.showConfirm(
                         'Cancelar Item',
@@ -664,6 +694,7 @@
                         const data = await response.json();
                         if (response.ok) {
                             this.order.discount = data.order.discount;
+                            this.order.service_fee = data.order.service_fee;
                             this.order.total = data.order.total;
                             this.order.remaining_amount = data.order.remaining_amount;
                             this.order.is_fully_paid = data.order.is_fully_paid;
@@ -676,6 +707,34 @@
                         this.showMessage('Erro ao aplicar desconto', 'error');
                     } finally {
                         this.savingDiscount = false;
+                    }
+                },
+
+                async toggleServiceFee() {
+                    this.savingServiceFee = true;
+                    try {
+                        const response = await fetch('/orders/{{ $order->uuid }}/service-fee', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const data = await response.json();
+                        if (response.ok) {
+                            this.order.service_fee = data.order.service_fee;
+                            this.order.total = data.order.total;
+                            this.order.remaining_amount = data.order.remaining_amount;
+                            this.order.is_fully_paid = data.order.is_fully_paid;
+                            this.showMessage(data.message);
+                        } else {
+                            this.showMessage(data.message || 'Erro ao alterar taxa de serviço', 'error');
+                        }
+                    } catch (error) {
+                        this.showMessage('Erro ao alterar taxa de serviço', 'error');
+                    } finally {
+                        this.savingServiceFee = false;
                     }
                 },
 

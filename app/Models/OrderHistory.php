@@ -67,6 +67,7 @@ class OrderHistory extends Model
         return match ($this->field) {
             'status' => 'Status',
             'discount' => 'Desconto',
+            'service_fee' => 'Taxa de Serviço',
             'notes' => 'Observações',
             'customer_name' => 'Cliente',
             'table_id' => 'Mesa',
@@ -99,7 +100,7 @@ class OrderHistory extends Model
             };
         }
 
-        if ($field === 'discount' || str_contains($field ?? '', 'price') || str_contains($field ?? '', 'amount')) {
+        if ($field === 'discount' || $field === 'service_fee' || str_contains($field ?? '', 'price') || str_contains($field ?? '', 'amount')) {
             return 'R$ ' . number_format((float) $value, 2, ',', '.');
         }
 

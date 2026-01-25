@@ -64,6 +64,7 @@ class OrderController extends Controller
                 'user_name' => $order->user?->name,
                 'subtotal' => (float) $order->subtotal,
                 'discount' => (float) $order->discount,
+                'service_fee' => (float) $order->service_fee,
                 'total' => (float) $order->total,
                 'total_paid' => $order->total_paid,
                 'remaining_amount' => $order->remaining_amount,
@@ -100,7 +101,7 @@ class OrderController extends Controller
                 'preparing_items' => $order->items->where('status', 'preparing')->count(),
                 'ready_items' => $order->items->where('status', 'ready')->count(),
                 'opened_at' => $order->opened_at->format('H:i'),
-                'duration_minutes' => $order->opened_at->diffInMinutes(now()),
+                'duration_minutes' => (int) $order->opened_at->diffInMinutes(now()),
             ]),
         ]);
     }
@@ -157,6 +158,7 @@ class OrderController extends Controller
             'status' => $order->status,
             'subtotal' => (float) $order->subtotal,
             'discount' => (float) $order->discount,
+            'service_fee' => (float) $order->service_fee,
             'total' => (float) $order->total,
             'total_paid' => $order->total_paid,
             'remaining_amount' => $order->remaining_amount,
@@ -167,6 +169,7 @@ class OrderController extends Controller
             return [
                 'id' => $item->id,
                 'uuid' => $item->uuid,
+                'product_id' => $item->product_id,
                 'product_name' => $item->product_name,
                 'quantity' => $item->quantity,
                 'unit_price' => (float) $item->unit_price,
@@ -180,6 +183,7 @@ class OrderController extends Controller
                     return [
                         'ingredient_name' => $c->ingredient_name,
                         'action' => $c->action,
+                        'price' => (float) $c->price,
                         'display_text' => $c->display_text,
                     ];
                 }),
@@ -224,6 +228,7 @@ class OrderController extends Controller
                 'user_name' => $order->user?->name,
                 'subtotal' => (float) $order->subtotal,
                 'discount' => (float) $order->discount,
+                'service_fee' => (float) $order->service_fee,
                 'total' => (float) $order->total,
                 'total_paid' => $order->total_paid,
                 'remaining_amount' => $order->remaining_amount,
@@ -231,7 +236,7 @@ class OrderController extends Controller
                 'notes' => $order->notes,
                 'opened_at' => $order->opened_at->format('d/m/Y H:i'),
                 'closed_at' => $order->closed_at?->format('d/m/Y H:i'),
-                'duration_minutes' => $order->opened_at->diffInMinutes(now()),
+                'duration_minutes' => (int) $order->opened_at->diffInMinutes(now()),
             ],
             'items' => $order->items->map(fn (OrderItem $item) => [
                 'id' => $item->id,
@@ -334,6 +339,57 @@ class OrderController extends Controller
     }
 
     /**
+     * Update item ingredients (customizations)
+     */
+    public function updateItemIngredients(Request $request, Order $order, OrderItem $item): JsonResponse
+    {
+        if ($item->order_id !== $order->id) {
+            return response()->json(['message' => 'Item não pertence a este pedido.'], 404);
+        }
+
+        if (! $order->isOpen()) {
+            return response()->json([
+                'message' => 'Não é possível editar itens de um pedido fechado.',
+            ], 422);
+        }
+
+        if ($item->status === 'cancelled') {
+            return response()->json([
+                'message' => 'Este item foi cancelado e não pode ser editado.',
+            ], 422);
+        }
+
+        $data = $request->validate([
+            'removed_ingredients' => ['nullable', 'array'],
+            'removed_ingredients.*.id' => ['required', 'integer'],
+            'removed_ingredients.*.name' => ['required', 'string'],
+            'added_ingredients' => ['nullable', 'array'],
+            'added_ingredients.*.id' => ['required', 'integer'],
+            'added_ingredients.*.name' => ['required', 'string'],
+            'added_ingredients.*.price' => ['nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $item = $this->orderService->updateItemIngredients($item, $data);
+
+        return response()->json([
+            'message' => 'Item atualizado com sucesso.',
+            'item' => [
+                'id' => $item->id,
+                'uuid' => $item->uuid,
+                'additions_price' => (float) $item->additions_price,
+                'total_price' => (float) $item->total_price,
+                'notes' => $item->notes,
+                'customizations' => $item->ingredientCustomizations->map(fn ($c) => [
+                    'ingredient_name' => $c->ingredient_name,
+                    'action' => $c->action,
+                    'display_text' => $c->display_text,
+                ]),
+            ],
+        ]);
+    }
+
+    /**
      * Cancel item
      */
     public function cancelItem(Request $request, Order $order, OrderItem $item): JsonResponse
@@ -367,6 +423,22 @@ class OrderController extends Controller
             'message' => $count > 0
                 ? "{$count} item(ns) enviado(s) para a cozinha."
                 : 'Nenhum item pendente para enviar.',
+            'count' => $count,
+        ]);
+    }
+
+    /**
+     * Deliver multiple items at once
+     */
+    public function deliverItems(Request $request, Order $order): JsonResponse
+    {
+        $itemIds = $request->input('item_ids');
+        $count = $this->orderService->deliverItems($order, $itemIds);
+
+        return response()->json([
+            'message' => $count > 0
+                ? "{$count} item(ns) entregue(s)."
+                : 'Nenhum item pronto para entregar.',
             'count' => $count,
         ]);
     }
@@ -477,6 +549,35 @@ class OrderController extends Controller
             'order' => [
                 'subtotal' => (float) $order->subtotal,
                 'discount' => (float) $order->discount,
+                'service_fee' => (float) $order->service_fee,
+                'total' => (float) $order->total,
+                'remaining_amount' => $order->remaining_amount,
+                'is_fully_paid' => $order->is_fully_paid,
+            ],
+        ]);
+    }
+
+    /**
+     * Toggle service fee (10%)
+     */
+    public function toggleServiceFee(Order $order): JsonResponse
+    {
+        if (! $order->isOpen()) {
+            return response()->json([
+                'message' => 'Não é possível alterar a taxa de serviço deste pedido.',
+            ], 422);
+        }
+
+        $order = $this->orderService->toggleServiceFee($order);
+
+        return response()->json([
+            'message' => $order->hasServiceFee()
+                ? 'Taxa de serviço aplicada.'
+                : 'Taxa de serviço removida.',
+            'order' => [
+                'subtotal' => (float) $order->subtotal,
+                'discount' => (float) $order->discount,
+                'service_fee' => (float) $order->service_fee,
                 'total' => (float) $order->total,
                 'remaining_amount' => $order->remaining_amount,
                 'is_fully_paid' => $order->is_fully_paid,

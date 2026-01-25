@@ -2,11 +2,14 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\IngredientController;
+use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReceptionController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WaiterController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -17,6 +20,26 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Recepção (Tables Grid)
+    Route::middleware('can:manage-orders')->group(function () {
+        Route::get('/reception', [ReceptionController::class, 'index'])->name('reception.index');
+        Route::get('/reception/tables', [ReceptionController::class, 'tables'])->name('reception.tables');
+    });
+
+    // Garçom (Waiter Dashboard)
+    Route::middleware('can:manage-orders')->group(function () {
+        Route::get('/waiter', [WaiterController::class, 'index'])->name('waiter.index');
+        Route::get('/waiter/orders', [WaiterController::class, 'orders'])->name('waiter.orders');
+    });
+
+    // Cozinha (Kitchen Display)
+    Route::middleware('can:manage-orders')->group(function () {
+        Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
+        Route::get('/kitchen/items', [KitchenController::class, 'items'])->name('kitchen.items');
+        Route::patch('/kitchen/items/{item}/ready', [KitchenController::class, 'markReady'])->name('kitchen.items.ready');
+        Route::patch('/kitchen/orders/{orderUuid}/ready', [KitchenController::class, 'markOrderReady'])->name('kitchen.orders.ready');
+    });
 
     // Cadastros (Categories, Products, Ingredients)
     Route::middleware('can:manage-products')->group(function () {
@@ -76,8 +99,10 @@ Route::middleware('auth')->group(function () {
         // Order Items
         Route::post('/orders/{order}/items', [OrderController::class, 'addItem'])->name('orders.items.add');
         Route::put('/orders/{order}/items/{item}', [OrderController::class, 'updateItem'])->name('orders.items.update');
+        Route::put('/orders/{order}/items/{item}/ingredients', [OrderController::class, 'updateItemIngredients'])->name('orders.items.ingredients');
         Route::delete('/orders/{order}/items/{item}/cancel', [OrderController::class, 'cancelItem'])->name('orders.items.cancel');
         Route::post('/orders/{order}/send-to-kitchen', [OrderController::class, 'sendToKitchen'])->name('orders.send-to-kitchen');
+        Route::post('/orders/{order}/deliver-items', [OrderController::class, 'deliverItems'])->name('orders.deliver-items');
         Route::patch('/orders/{order}/items/{item}/ready', [OrderController::class, 'markItemReady'])->name('orders.items.ready');
         Route::patch('/orders/{order}/items/{item}/delivered', [OrderController::class, 'markItemDelivered'])->name('orders.items.delivered');
 
@@ -87,6 +112,7 @@ Route::middleware('auth')->group(function () {
 
         // Order Actions
         Route::post('/orders/{order}/discount', [OrderController::class, 'applyDiscount'])->name('orders.discount');
+        Route::post('/orders/{order}/service-fee', [OrderController::class, 'toggleServiceFee'])->name('orders.service-fee');
         Route::post('/orders/{order}/close', [OrderController::class, 'close'])->name('orders.close');
         Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
         Route::post('/orders/{order}/transfer', [OrderController::class, 'transfer'])->name('orders.transfer');

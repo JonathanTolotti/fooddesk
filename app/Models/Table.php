@@ -54,6 +54,16 @@ class Table extends Model
         return $this->hasMany(TableHistory::class)->orderByDesc('created_at');
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function currentOrder(): ?Order
+    {
+        return $this->orders()->where('status', 'open')->first();
+    }
+
     public function isAvailable(): bool
     {
         return $this->status === 'available' && $this->is_active;

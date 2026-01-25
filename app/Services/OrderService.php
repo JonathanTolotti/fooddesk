@@ -200,6 +200,104 @@ class OrderService
     }
 
     /**
+     * Update item ingredients (customizations)
+     */
+    public function updateItemIngredients(OrderItem $item, array $data): OrderItem
+    {
+        return DB::transaction(function () use ($item, $data) {
+            $changes = [];
+
+            // Get current customizations for comparison
+            $currentRemoved = $item->ingredientCustomizations()
+                ->where('action', 'removed')
+                ->pluck('ingredient_name')
+                ->toArray();
+
+            $currentAdded = $item->ingredientCustomizations()
+                ->where('action', 'added')
+                ->pluck('ingredient_name')
+                ->toArray();
+
+            // Delete current customizations
+            $item->ingredientCustomizations()->delete();
+
+            // Add new removed ingredients
+            $newRemovedNames = [];
+            if (! empty($data['removed_ingredients'])) {
+                foreach ($data['removed_ingredients'] as $ingredientData) {
+                    OrderItemIngredient::create([
+                        'order_item_id' => $item->id,
+                        'ingredient_id' => $ingredientData['id'],
+                        'ingredient_name' => $ingredientData['name'],
+                        'action' => 'removed',
+                        'price' => 0,
+                    ]);
+                    $newRemovedNames[] = $ingredientData['name'];
+                }
+            }
+
+            // Add new added ingredients
+            $additionsPrice = 0;
+            $newAddedNames = [];
+            if (! empty($data['added_ingredients'])) {
+                foreach ($data['added_ingredients'] as $ingredientData) {
+                    OrderItemIngredient::create([
+                        'order_item_id' => $item->id,
+                        'ingredient_id' => $ingredientData['id'],
+                        'ingredient_name' => $ingredientData['name'],
+                        'action' => 'added',
+                        'price' => $ingredientData['price'] ?? 0,
+                    ]);
+                    $additionsPrice += $ingredientData['price'] ?? 0;
+                    $newAddedNames[] = $ingredientData['name'];
+                }
+            }
+
+            // Update notes if provided
+            if (isset($data['notes'])) {
+                $item->notes = $data['notes'];
+            }
+
+            // Recalculate price
+            $item->additions_price = $additionsPrice;
+            $item->total_price = $item->calculateTotalPrice();
+            $item->save();
+
+            // Build change description
+            $removedDiff = array_diff($newRemovedNames, $currentRemoved);
+            $addedDiff = array_diff($newAddedNames, $currentAdded);
+            $unrmovedDiff = array_diff($currentRemoved, $newRemovedNames);
+            $unaddedDiff = array_diff($currentAdded, $newAddedNames);
+
+            $descParts = [];
+            if (! empty($removedDiff)) {
+                $descParts[] = 'removeu: ' . implode(', ', $removedDiff);
+            }
+            if (! empty($addedDiff)) {
+                $descParts[] = 'adicionou: ' . implode(', ', $addedDiff);
+            }
+            if (! empty($unrmovedDiff)) {
+                $descParts[] = 'restaurou: ' . implode(', ', $unrmovedDiff);
+            }
+            if (! empty($unaddedDiff)) {
+                $descParts[] = 'retirou adicional: ' . implode(', ', $unaddedDiff);
+            }
+
+            if (! empty($descParts)) {
+                OrderHistory::create([
+                    'order_id' => $item->order_id,
+                    'event' => 'item_updated',
+                    'description' => "{$item->product_name}: " . implode('; ', $descParts),
+                    'user_id' => Auth::id(),
+                    'created_at' => now(),
+                ]);
+            }
+
+            return $item->fresh(['ingredientCustomizations']);
+        });
+    }
+
+    /**
      * Cancel item
      */
     public function cancelItem(OrderItem $item, ?string $reason = null): OrderItem
@@ -241,6 +339,37 @@ class OrderService
                     'order_id' => $order->id,
                     'event' => 'item_sent_to_kitchen',
                     'description' => "{$count} item(ns) enviado(s) para cozinha",
+                    'user_id' => Auth::id(),
+                    'created_at' => now(),
+                ]);
+            }
+
+            return $count;
+        });
+    }
+
+    /**
+     * Deliver multiple items at once
+     */
+    public function deliverItems(Order $order, ?array $itemIds = null): int
+    {
+        return DB::transaction(function () use ($order, $itemIds) {
+            $query = $order->items()->where('status', 'ready');
+
+            if ($itemIds) {
+                $query->whereIn('id', $itemIds);
+            }
+
+            $count = $query->update([
+                'status' => 'delivered',
+                'delivered_at' => now(),
+            ]);
+
+            if ($count > 0) {
+                OrderHistory::create([
+                    'order_id' => $order->id,
+                    'event' => 'items_delivered',
+                    'description' => "{$count} item(ns) entregue(s)",
                     'user_id' => Auth::id(),
                     'created_at' => now(),
                 ]);
@@ -345,8 +474,47 @@ class OrderService
     {
         return $this->repository->update($order, [
             'discount' => $discount,
-            'total' => max(0, $order->subtotal - $discount),
+            'total' => max(0, $order->subtotal - $discount + $order->service_fee),
         ]);
+    }
+
+    /**
+     * Toggle service fee (10%)
+     */
+    public function toggleServiceFee(Order $order): Order
+    {
+        return DB::transaction(function () use ($order) {
+            $oldServiceFee = (float) $order->service_fee;
+
+            if ($order->hasServiceFee()) {
+                // Remove service fee
+                $newServiceFee = 0;
+            } else {
+                // Apply 10% service fee
+                $newServiceFee = $order->calculateServiceFee();
+            }
+
+            $order = $this->repository->update($order, [
+                'service_fee' => $newServiceFee,
+                'total' => max(0, $order->subtotal - $order->discount + $newServiceFee),
+            ]);
+
+            // Log history
+            OrderHistory::create([
+                'order_id' => $order->id,
+                'event' => 'updated',
+                'field' => 'service_fee',
+                'old_value' => $oldServiceFee > 0 ? $oldServiceFee : null,
+                'new_value' => $newServiceFee > 0 ? $newServiceFee : null,
+                'description' => $newServiceFee > 0
+                    ? 'Taxa de serviço aplicada: R$ ' . number_format($newServiceFee, 2, ',', '.')
+                    : 'Taxa de serviço removida',
+                'user_id' => Auth::id(),
+                'created_at' => now(),
+            ]);
+
+            return $order;
+        });
     }
 
     /**

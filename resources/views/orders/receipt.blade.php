@@ -233,6 +233,12 @@
                 <span>- R$ {{ number_format($order->discount, 2, ',', '.') }}</span>
             </div>
         @endif
+        @if($order->service_fee > 0)
+            <div class="row">
+                <span>Taxa de Serviço (10%):</span>
+                <span>+ R$ {{ number_format($order->service_fee, 2, ',', '.') }}</span>
+            </div>
+        @endif
         <div class="row total">
             <span>TOTAL:</span>
             <span>R$ {{ number_format($order->total, 2, ',', '.') }}</span>
@@ -255,7 +261,8 @@
         <p>================================</p>
         <p>Obrigado pela preferência!</p>
         <p>================================</p>
-        <p style="margin-top: 10px; font-size: 10px;">
+        <p>Impresso usando FoodDesk</p>
+        <p style="margin-top: 5px; font-size: 10px;">
             {{ now()->format('d/m/Y H:i:s') }}
         </p>
     </div>

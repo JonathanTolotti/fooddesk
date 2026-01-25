@@ -257,23 +257,23 @@
             async loadProductIngredients(product) {
                 // Get ingredients from the product data
                 this.standardIngredients = (product.ingredients || [])
-                    .filter(i => i.pivot_type === 'standard')
+                    .filter(i => i.type === 'standard')
                     .map(i => ({ id: i.id, name: i.name }));
 
                 this.additionalIngredients = (product.ingredients || [])
-                    .filter(i => i.pivot_type === 'additional')
-                    .map(i => ({ id: i.id, name: i.name, price: i.pivot_price || 0 }));
+                    .filter(i => i.type === 'additional')
+                    .map(i => ({ id: i.id, name: i.name, price: parseFloat(i.additional_price) || 0 }));
             },
 
             calculateTotal() {
                 if (!this.selectedProduct) return 0;
 
-                let total = this.selectedProduct.price;
+                let total = parseFloat(this.selectedProduct.price) || 0;
 
                 // Add additional ingredients price
                 this.form.added_ingredients.forEach(ingId => {
                     const ing = this.additionalIngredients.find(i => i.id == ingId);
-                    if (ing) total += ing.price;
+                    if (ing) total += parseFloat(ing.price) || 0;
                 });
 
                 return total * this.form.quantity;

@@ -10,6 +10,15 @@
                     </x-nav-link>
 
                     @can('manage-orders')
+                        <x-nav-link :href="route('reception.index')" :active="request()->routeIs('reception.*')">
+                            Recepção
+                        </x-nav-link>
+                        <x-nav-link :href="route('waiter.index')" :active="request()->routeIs('waiter.*')">
+                            Garçom
+                        </x-nav-link>
+                        <x-nav-link :href="route('kitchen.index')" :active="request()->routeIs('kitchen.*')" target="_blank">
+                            Cozinha
+                        </x-nav-link>
                         <x-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
                             Pedidos
                         </x-nav-link>
@@ -123,6 +132,15 @@
             </x-responsive-nav-link>
 
             @can('manage-orders')
+                <x-responsive-nav-link :href="route('reception.index')" :active="request()->routeIs('reception.*')">
+                    Recepção
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('waiter.index')" :active="request()->routeIs('waiter.*')">
+                    Garçom
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('kitchen.index')" target="_blank">
+                    Cozinha
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
                     Pedidos
                 </x-responsive-nav-link>

@@ -61,7 +61,7 @@ class ProductController extends Controller
                     'name' => $ingredient->name,
                     'type' => $ingredient->pivot->type,
                     'quantity' => $ingredient->pivot->quantity,
-                    'additional_price' => $ingredient->pivot->additional_price,
+                    'additional_price' => (float) ($ingredient->pivot->additional_price ?? 0),
                     'additional_price_formatted' => $ingredient->pivot->additional_price
                         ? 'R$ '.number_format($ingredient->pivot->additional_price, 2, ',', '.')
                         : null,
@@ -179,7 +179,7 @@ class ProductController extends Controller
                 'name' => $ingredient->name,
                 'type' => $ingredient->pivot->type,
                 'quantity' => $ingredient->pivot->quantity,
-                'additional_price' => $ingredient->pivot->additional_price,
+                'additional_price' => (float) ($ingredient->pivot->additional_price ?? 0),
                 'additional_price_formatted' => $ingredient->pivot->additional_price
                     ? 'R$ '.number_format($ingredient->pivot->additional_price, 2, ',', '.')
                     : null,
