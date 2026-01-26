@@ -189,7 +189,7 @@
         </div>
         <div class="info-row">
             <span>Atendente:</span>
-            <span>{{ $order->user->name }}</span>
+            <span>{{ $order->user?->name ?? 'Autoatendimento' }}</span>
         </div>
     </div>
 

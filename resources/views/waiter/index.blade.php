@@ -106,7 +106,11 @@
                                           x-text="order.table_number || '#'"></span>
                                 </div>
                                 <div>
-                                    <p class="font-medium text-gray-900 dark:text-gray-100" x-text="order.display_name"></p>
+                                    <p class="font-medium text-gray-900 dark:text-gray-100">
+                                        <span class="text-blue-600 dark:text-blue-400">#<span x-text="order.id"></span></span>
+                                        <span class="mx-1 text-gray-400">•</span>
+                                        <span x-text="order.display_name"></span>
+                                    </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400" x-text="order.opened_at + ' (' + formatDuration(order.duration_minutes) + ')'"></p>
                                 </div>
                             </div>

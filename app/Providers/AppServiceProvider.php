@@ -82,9 +82,24 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasRole(UserRole::Manager, UserRole::Waiter);
         });
 
+        // Visualizar recepção (abertura de pedidos)
+        Gate::define('view-reception', function (User $user) {
+            return $user->isManager();
+        });
+
+        // Visualizar tela do garçom
+        Gate::define('view-waiter', function (User $user) {
+            return $user->hasRole(UserRole::Manager, UserRole::Waiter);
+        });
+
         // Visualizar fila da cozinha
         Gate::define('view-kitchen', function (User $user) {
             return $user->hasRole(UserRole::Manager, UserRole::Kitchen);
+        });
+
+        // Visualizar listagem de pedidos (com filtros)
+        Gate::define('view-orders-list', function (User $user) {
+            return $user->isManager();
         });
 
         // Gestão de usuários

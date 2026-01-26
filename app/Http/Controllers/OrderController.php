@@ -206,6 +206,34 @@ class OrderController extends Controller
     }
 
     /**
+     * Get active products for adding to orders (AJAX)
+     */
+    public function getProducts(): JsonResponse
+    {
+        $products = $this->productService->filter(['status' => 'active'], 100);
+
+        return response()->json([
+            'products' => $products->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'description' => $product->description,
+                    'price' => (float) $product->price,
+                    'category_id' => $product->category_id,
+                    'category_name' => $product->category?->name,
+                    'image' => $product->image,
+                    'ingredients' => $product->ingredients->map(fn ($i) => [
+                        'id' => $i->id,
+                        'name' => $i->name,
+                        'type' => $i->pivot->type,
+                        'additional_price' => (float) $i->pivot->additional_price,
+                    ]),
+                ];
+            }),
+        ]);
+    }
+
+    /**
      * Get order data (AJAX)
      */
     public function getData(Order $order): JsonResponse
@@ -540,7 +568,7 @@ class OrderController extends Controller
     public function applyDiscount(Request $request, Order $order): JsonResponse
     {
         $request->validate([
-            'discount' => ['required', 'numeric', 'min:0', 'max:' . $order->subtotal],
+            'discount' => ['required', 'numeric', 'min:0', 'max:'.$order->subtotal],
         ]);
 
         $order = $this->orderService->applyDiscount($order, $request->input('discount'));

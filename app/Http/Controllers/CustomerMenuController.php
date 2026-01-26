@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AddCustomerOrderItemRequest;
+use App\Http\Requests\SearchCustomerRequest;
+use App\Http\Requests\StoreCustomerRequest;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Table;
+use App\Services\CustomerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +19,10 @@ use Illuminate\View\View;
 
 class CustomerMenuController extends Controller
 {
+    public function __construct(
+        private CustomerService $customerService
+    ) {}
+
     /**
      * Display the customer identification page or menu
      */
@@ -35,12 +43,13 @@ class CustomerMenuController extends Controller
         // Check session for customer identification
         $customerId = session("customer_{$tableUuid}");
         if ($customerId) {
-            $customer = Customer::find($customerId);
+            $customer = $this->customerService->findById($customerId);
             if ($customer) {
                 // If there's an existing order, associate customer
-                if ($order && !$order->customer_id) {
+                if ($order && ! $order->customer_id) {
                     $order->update(['customer_id' => $customer->id, 'customer_name' => $customer->name]);
                 }
+
                 return $this->showMenu($table, $order, $customer);
             }
         }
@@ -52,33 +61,21 @@ class CustomerMenuController extends Controller
     /**
      * Search customer by phone
      */
-    public function searchCustomer(Request $request, string $tableUuid): JsonResponse
+    public function searchCustomer(SearchCustomerRequest $request, string $tableUuid): JsonResponse
     {
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
 
-        $phone = preg_replace('/\D/', '', $request->input('phone', ''));
-
-        if (strlen($phone) < 10) {
-            return response()->json(['found' => false, 'message' => 'Telefone inválido']);
-        }
-
-        $customer = Customer::where('phone', $phone)->first();
+        $customer = $this->customerService->searchByPhone($request->validated('phone'));
 
         if ($customer) {
             // Save to session
-            session(["customer_{$tableUuid}" => $customer->id]);
+            session(["customer_{$tableUuid}" => $customer['id']]);
 
             return response()->json([
                 'found' => true,
-                'customer' => [
-                    'id' => $customer->id,
-                    'name' => $customer->name,
-                    'phone' => $customer->formatted_phone,
-                    'birth_date' => $customer->birth_date?->format('d/m/Y'),
-                    'is_birthday' => $customer->is_birthday,
-                ],
+                'customer' => $customer,
             ]);
         }
 
@@ -88,51 +85,20 @@ class CustomerMenuController extends Controller
     /**
      * Register new customer
      */
-    public function registerCustomer(Request $request, string $tableUuid): JsonResponse
+    public function registerCustomer(StoreCustomerRequest $request, string $tableUuid): JsonResponse
     {
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'birth_date' => 'nullable|date',
-        ], [
-            'name.required' => 'Informe seu nome.',
-            'phone.required' => 'Informe seu telefone.',
-        ]);
-
-        $phone = preg_replace('/\D/', '', $validated['phone']);
-
-        // Check if phone already exists
-        $existing = Customer::where('phone', $phone)->first();
-        if ($existing) {
-            session(["customer_{$tableUuid}" => $existing->id]);
-            return response()->json([
-                'success' => true,
-                'customer' => [
-                    'id' => $existing->id,
-                    'name' => $existing->name,
-                ],
-            ]);
-        }
-
-        $customer = Customer::create([
-            'name' => $validated['name'],
-            'phone' => $phone,
-            'birth_date' => $validated['birth_date'] ?? null,
-        ]);
+        $result = $this->customerService->register($request->validated());
 
         // Save to session
-        session(["customer_{$tableUuid}" => $customer->id]);
+        session(["customer_{$tableUuid}" => $result['customer']['id']]);
 
         return response()->json([
             'success' => true,
-            'customer' => [
-                'id' => $customer->id,
-                'name' => $customer->name,
-            ],
+            'customer' => $result['customer'],
         ]);
     }
 
@@ -153,17 +119,12 @@ class CustomerMenuController extends Controller
             ->get();
 
         // Get customer from order if not provided
-        if (!$customer && $order && $order->customer_id) {
+        if (! $customer && $order && $order->customer_id) {
             $customer = $order->customer;
         }
 
         $orderData = $order ? $this->formatOrder($order) : null;
-        $customerData = $customer ? [
-            'id' => $customer->id,
-            'name' => $customer->name,
-            'phone' => $customer->formatted_phone,
-            'is_birthday' => $customer->is_birthday,
-        ] : null;
+        $customerData = $customer ? $this->customerService->formatCustomer($customer) : null;
 
         return view('customer.menu', compact('table', 'categories', 'order', 'orderData', 'customer', 'customerData'));
     }
@@ -179,7 +140,7 @@ class CustomerMenuController extends Controller
 
         $order = $table->currentOrder();
 
-        if (!$order) {
+        if (! $order) {
             return response()->json(['order' => null]);
         }
 
@@ -191,45 +152,36 @@ class CustomerMenuController extends Controller
     /**
      * Add item to order
      */
-    public function addItem(Request $request, string $tableUuid): JsonResponse
+    public function addItem(AddCustomerOrderItemRequest $request, string $tableUuid): JsonResponse
     {
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
 
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1|max:99',
-            'notes' => 'nullable|string|max:500',
-            'removed_ingredients' => 'nullable|array',
-            'removed_ingredients.*' => 'exists:ingredients,id',
-            'added_ingredients' => 'nullable|array',
-            'added_ingredients.*' => 'exists:ingredients,id',
-        ]);
-
+        $validated = $request->validated();
         $product = Product::with('ingredients')->findOrFail($validated['product_id']);
 
         // Get customer from session
         $customerId = session("customer_{$tableUuid}");
-        $customer = $customerId ? Customer::find($customerId) : null;
+        $customer = $customerId ? $this->customerService->findById($customerId) : null;
 
         return DB::transaction(function () use ($table, $product, $validated, $customer) {
             // Get or create order
             $order = $table->currentOrder();
 
-            if (!$order) {
+            if (! $order) {
                 $order = Order::create([
                     'table_id' => $table->id,
                     'customer_id' => $customer?->id,
                     'type' => 'dine_in',
                     'status' => 'open',
-                    'user_id' => null, // Customer order, no user
+                    'user_id' => null, // Self-service order, no user
                     'customer_name' => $customer?->name,
                 ]);
 
                 // Update table status
                 $table->update(['status' => 'occupied']);
-            } elseif (!$order->customer_id && $customer) {
+            } elseif (! $order->customer_id && $customer) {
                 // Associate customer if order exists but has no customer
                 $order->update(['customer_id' => $customer->id, 'customer_name' => $customer->name]);
             }
@@ -261,11 +213,11 @@ class CustomerMenuController extends Controller
             foreach ($removedIngredients as $ingredientId) {
                 $ingredient = $product->ingredients->find($ingredientId);
                 if ($ingredient && $ingredient->pivot->type === 'standard') {
-                    $item->ingredients()->create([
+                    $item->ingredientCustomizations()->create([
                         'ingredient_id' => $ingredientId,
                         'ingredient_name' => $ingredient->name,
                         'action' => 'removed',
-                        'additional_price' => 0,
+                        'price' => 0,
                     ]);
                 }
             }
@@ -274,11 +226,11 @@ class CustomerMenuController extends Controller
             foreach ($addedIngredients as $ingredientId) {
                 $ingredient = $product->ingredients->find($ingredientId);
                 if ($ingredient && $ingredient->pivot->type === 'additional') {
-                    $item->ingredients()->create([
+                    $item->ingredientCustomizations()->create([
                         'ingredient_id' => $ingredientId,
                         'ingredient_name' => $ingredient->name,
                         'action' => 'added',
-                        'additional_price' => $ingredient->pivot->additional_price ?? 0,
+                        'price' => $ingredient->pivot->additional_price ?? 0,
                     ]);
                 }
             }
@@ -304,13 +256,13 @@ class CustomerMenuController extends Controller
 
         $order = $table->currentOrder();
 
-        if (!$order) {
+        if (! $order) {
             return response()->json(['message' => 'Pedido não encontrado.'], 404);
         }
 
         $item = $order->items()->where('id', $itemId)->first();
 
-        if (!$item) {
+        if (! $item) {
             return response()->json(['message' => 'Item não encontrado.'], 404);
         }
 
@@ -321,7 +273,7 @@ class CustomerMenuController extends Controller
             ], 422);
         }
 
-        $item->ingredients()->delete();
+        $item->ingredientCustomizations()->delete();
         $item->delete();
 
         $order->recalculateTotals();
@@ -343,7 +295,7 @@ class CustomerMenuController extends Controller
 
         $order = $table->currentOrder();
 
-        if (!$order) {
+        if (! $order) {
             return response()->json(['message' => 'Pedido não encontrado.'], 404);
         }
 
@@ -386,7 +338,7 @@ class CustomerMenuController extends Controller
      */
     private function formatOrder(Order $order): array
     {
-        $order->load(['items.ingredients']);
+        $order->load(['items.ingredientCustomizations']);
 
         return [
             'id' => $order->id,
@@ -408,11 +360,11 @@ class CustomerMenuController extends Controller
                     'status' => $item->status,
                     'status_label' => $item->status_label,
                     'can_remove' => $item->status === 'pending',
-                    'customizations' => $item->ingredients->map(function ($ing) {
+                    'customizations' => $item->ingredientCustomizations->map(function ($ing) {
                         return [
                             'name' => $ing->ingredient_name,
                             'action' => $ing->action,
-                            'price' => $ing->additional_price,
+                            'price' => $ing->price,
                         ];
                     }),
                 ];

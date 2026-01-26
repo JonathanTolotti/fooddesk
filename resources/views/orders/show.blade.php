@@ -12,7 +12,7 @@
                         Pedido #{{ $order->id }}
                     </h1>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {{ $order->type_label }} • {{ $order->user->name }} • Aberto há <span x-data x-text="formatDuration({{ round($order->opened_at->diffInMinutes(now())) }})"></span>
+                        {{ $order->type_label }} • {{ $order->user?->name ?? 'Autoatendimento' }} • Aberto há <span x-data x-text="formatDuration({{ round($order->opened_at->diffInMinutes(now())) }})"></span>
                     </p>
                 </div>
             </div>

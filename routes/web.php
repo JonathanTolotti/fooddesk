@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerMenuController;
@@ -13,10 +14,18 @@ use App\Http\Controllers\TableController;
 use App\Http\Controllers\TableQrCodeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WaiterController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('dashboard');
+    $user = Auth::user();
+
+    // Redirect non-managers to their specific screens
+    return match ($user->role) {
+        UserRole::Waiter => redirect()->route('waiter.index'),
+        UserRole::Kitchen => redirect()->route('kitchen.index'),
+        default => view('dashboard'),
+    };
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Public routes - Customer Self-Service
@@ -54,7 +63,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Cozinha (Kitchen Display)
-    Route::middleware('can:manage-orders')->group(function () {
+    Route::middleware('can:view-kitchen')->group(function () {
         Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
         Route::get('/kitchen/items', [KitchenController::class, 'items'])->name('kitchen.items');
         Route::patch('/kitchen/items/{item}/ready', [KitchenController::class, 'markReady'])->name('kitchen.items.ready');
@@ -107,11 +116,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/tables/{table}/qrcode/download', [TableQrCodeController::class, 'download'])->name('tables.qrcode.download');
     });
 
-    // Pedidos (Orders)
-    Route::middleware('can:manage-orders')->group(function () {
+    // Pedidos - Listagem (apenas Manager)
+    Route::middleware('can:view-orders-list')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::post('/orders/filter', [OrderController::class, 'filter'])->name('orders.filter');
+    });
+
+    // Pedidos - Ações (Manager e Garçom)
+    Route::middleware('can:manage-orders')->group(function () {
         Route::get('/orders/open', [OrderController::class, 'openOrders'])->name('orders.open');
+        Route::get('/orders/products', [OrderController::class, 'getProducts'])->name('orders.products');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/from-table/{table}', [OrderController::class, 'openFromTable'])->name('orders.from-table');
 

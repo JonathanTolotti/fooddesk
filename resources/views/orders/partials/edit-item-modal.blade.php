@@ -163,14 +163,11 @@
 
                 try {
                     // Load product with ingredients
-                    const response = await fetch('{{ route('products.filter') }}', {
-                        method: 'POST',
+                    const response = await fetch('{{ route('orders.products') }}', {
+                        method: 'GET',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
                             'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({ status: 'active', per_page: 100 })
+                        }
                     });
                     const data = await response.json();
                     this.product = data.products.find(p => p.id === this.item.product_id);

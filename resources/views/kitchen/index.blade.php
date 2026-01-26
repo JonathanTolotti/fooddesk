@@ -82,7 +82,11 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold"
                                      x-text="item.table_number || '#'"></div>
-                                <span class="font-medium" x-text="item.display_name"></span>
+                                <div>
+                                    <span class="text-orange-400 font-bold">#<span x-text="item.order_id"></span></span>
+                                    <span class="mx-1 text-gray-500">•</span>
+                                    <span class="font-medium" x-text="item.display_name"></span>
+                                </div>
                             </div>
                             <div class="text-right">
                                 <p class="text-sm text-gray-400" x-text="item.sent_at"></p>
@@ -148,7 +152,11 @@
                                 <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-xl font-bold"
                                      x-text="order.table_number || '#'"></div>
                                 <div>
-                                    <span class="font-bold text-lg" x-text="order.display_name"></span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-orange-400 font-bold">#<span x-text="order.order_id"></span></span>
+                                        <span class="text-gray-500">•</span>
+                                        <span class="font-bold text-lg" x-text="order.display_name"></span>
+                                    </div>
                                     <p class="text-sm text-gray-400" x-text="order.items_count + ' item(ns)'"></p>
                                 </div>
                             </div>
