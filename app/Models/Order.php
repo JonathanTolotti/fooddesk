@@ -194,14 +194,23 @@ class Order extends Model
 
     public function recalculateTotals(): void
     {
+        $oldSubtotal = (float) $this->subtotal;
+
         $subtotal = $this->items()
             ->where('status', '!=', 'cancelled')
             ->sum('total_price');
 
         $this->subtotal = $subtotal;
 
-        // Recalculate service fee if it's active (10% of new subtotal)
-        if ($this->service_fee > 0) {
+        // Auto-apply service fee on first item if enabled in settings
+        if ($oldSubtotal == 0 && $subtotal > 0 && $this->service_fee == 0) {
+            $settingService = app(\App\Services\SettingService::class);
+            if ($settingService->get('service_fee_enabled', true)) {
+                $this->service_fee = $this->calculateServiceFee();
+            }
+        }
+        // Recalculate service fee if it's already active
+        elseif ($this->service_fee > 0) {
             $this->service_fee = $this->calculateServiceFee();
         }
 
@@ -218,10 +227,12 @@ class Order extends Model
     }
 
     /**
-     * Calculate service fee based on subtotal (10%)
+     * Calculate service fee based on settings.
      */
     public function calculateServiceFee(): float
     {
-        return round($this->subtotal * 0.10, 2);
+        $settingService = app(\App\Services\SettingService::class);
+
+        return $settingService->calculateServiceFee((float) $this->subtotal);
     }
 }

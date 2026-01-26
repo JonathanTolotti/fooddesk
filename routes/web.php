@@ -10,6 +10,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReceptionController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\TableQrCodeController;
 use App\Http\Controllers\UserController;
@@ -163,6 +164,11 @@ Route::middleware('auth')->group(function () {
         Route::post('users/filter', [UserController::class, 'filter'])->name('users.filter');
         Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::get('users/{user}/history', [UserController::class, 'history'])->name('users.history');
+
+        // Settings
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::get('/settings/{setting}/history', [SettingController::class, 'history'])->name('settings.history');
     });
 });
 

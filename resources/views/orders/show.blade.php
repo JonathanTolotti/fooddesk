@@ -198,7 +198,7 @@
                         </div>
                         <div class="flex justify-between items-center text-sm">
                             <div class="flex items-center gap-2">
-                                <span class="text-gray-600 dark:text-gray-400">Taxa de Serviço (10%)</span>
+                                <span class="text-gray-600 dark:text-gray-400">{{ $serviceFeeLabel }}</span>
                                 @if($order->isOpen())
                                     <button @click="toggleServiceFee()"
                                             :disabled="savingServiceFee"

@@ -68,16 +68,16 @@
                 <template x-for="item in items" :key="item.id">
                     <div class="rounded-xl overflow-hidden transition-all duration-300"
                          :class="{
-                             'bg-gray-800 border-2 border-gray-700': item.waiting_minutes < 10,
-                             'bg-yellow-900/50 border-2 border-yellow-600': item.waiting_minutes >= 10 && item.waiting_minutes < 20,
-                             'bg-red-900/50 border-2 border-red-600 animate-pulse': item.waiting_minutes >= 20
+                             'bg-gray-800 border-2 border-gray-700': item.waiting_minutes < yellowMinutes,
+                             'bg-yellow-900/50 border-2 border-yellow-600': item.waiting_minutes >= yellowMinutes && item.waiting_minutes < redMinutes,
+                             'bg-red-900/50 border-2 border-red-600 animate-pulse': item.waiting_minutes >= redMinutes
                          }">
                         <!-- Item Header -->
                         <div class="px-4 py-3 border-b border-gray-700 flex items-center justify-between"
                              :class="{
-                                 'bg-gray-700': item.waiting_minutes < 10,
-                                 'bg-yellow-800': item.waiting_minutes >= 10 && item.waiting_minutes < 20,
-                                 'bg-red-800': item.waiting_minutes >= 20
+                                 'bg-gray-700': item.waiting_minutes < yellowMinutes,
+                                 'bg-yellow-800': item.waiting_minutes >= yellowMinutes && item.waiting_minutes < redMinutes,
+                                 'bg-red-800': item.waiting_minutes >= redMinutes
                              }">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold"
@@ -92,9 +92,9 @@
                                 <p class="text-sm text-gray-400" x-text="item.sent_at"></p>
                                 <p class="font-bold"
                                    :class="{
-                                       'text-green-400': item.waiting_minutes < 10,
-                                       'text-yellow-400': item.waiting_minutes >= 10 && item.waiting_minutes < 20,
-                                       'text-red-400': item.waiting_minutes >= 20
+                                       'text-green-400': item.waiting_minutes < yellowMinutes,
+                                       'text-yellow-400': item.waiting_minutes >= yellowMinutes && item.waiting_minutes < redMinutes,
+                                       'text-red-400': item.waiting_minutes >= redMinutes
                                    }"
                                    x-text="item.waiting_minutes + ' min'"></p>
                             </div>
@@ -137,16 +137,16 @@
                 <template x-for="order in byOrder" :key="order.order_id">
                     <div class="rounded-xl overflow-hidden transition-all duration-300"
                          :class="{
-                             'bg-gray-800 border-2 border-gray-700': order.oldest_item_minutes < 10,
-                             'bg-yellow-900/50 border-2 border-yellow-600': order.oldest_item_minutes >= 10 && order.oldest_item_minutes < 20,
-                             'bg-red-900/50 border-2 border-red-600 animate-pulse': order.oldest_item_minutes >= 20
+                             'bg-gray-800 border-2 border-gray-700': order.oldest_item_minutes < yellowMinutes,
+                             'bg-yellow-900/50 border-2 border-yellow-600': order.oldest_item_minutes >= yellowMinutes && order.oldest_item_minutes < redMinutes,
+                             'bg-red-900/50 border-2 border-red-600 animate-pulse': order.oldest_item_minutes >= redMinutes
                          }">
                         <!-- Order Header -->
                         <div class="px-4 py-3 border-b border-gray-700 flex items-center justify-between"
                              :class="{
-                                 'bg-gray-700': order.oldest_item_minutes < 10,
-                                 'bg-yellow-800': order.oldest_item_minutes >= 10 && order.oldest_item_minutes < 20,
-                                 'bg-red-800': order.oldest_item_minutes >= 20
+                                 'bg-gray-700': order.oldest_item_minutes < yellowMinutes,
+                                 'bg-yellow-800': order.oldest_item_minutes >= yellowMinutes && order.oldest_item_minutes < redMinutes,
+                                 'bg-red-800': order.oldest_item_minutes >= redMinutes
                              }">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-xl font-bold"
@@ -163,9 +163,9 @@
                             <div class="text-right">
                                 <p class="text-2xl font-bold"
                                    :class="{
-                                       'text-green-400': order.oldest_item_minutes < 10,
-                                       'text-yellow-400': order.oldest_item_minutes >= 10 && order.oldest_item_minutes < 20,
-                                       'text-red-400': order.oldest_item_minutes >= 20
+                                       'text-green-400': order.oldest_item_minutes < yellowMinutes,
+                                       'text-yellow-400': order.oldest_item_minutes >= yellowMinutes && order.oldest_item_minutes < redMinutes,
+                                       'text-red-400': order.oldest_item_minutes >= redMinutes
                                    }"
                                    x-text="order.oldest_item_minutes + ' min'"></p>
                             </div>
@@ -221,13 +221,16 @@
                 viewMode: 'orders',
                 currentTime: '',
                 previousCount: 0,
+                yellowMinutes: {{ $kitchenSettings['yellow_minutes'] }},
+                redMinutes: {{ $kitchenSettings['red_minutes'] }},
+                refreshSeconds: {{ $kitchenSettings['refresh_seconds'] }},
 
                 init() {
                     this.updateClock();
                     setInterval(() => this.updateClock(), 1000);
                     this.loadItems();
-                    // Refresh every 10 seconds
-                    setInterval(() => this.loadItems(), 10000);
+                    // Refresh based on settings
+                    setInterval(() => this.loadItems(), this.refreshSeconds * 1000);
                 },
 
                 updateClock() {

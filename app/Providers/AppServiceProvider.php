@@ -10,10 +10,12 @@ use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use App\Repositories\Interfaces\IngredientRepositoryInterface;
 use App\Repositories\Interfaces\OrderRepositoryInterface;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
+use App\Repositories\Interfaces\SettingRepositoryInterface;
 use App\Repositories\Interfaces\TableRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
+use App\Repositories\SettingRepository;
 use App\Repositories\TableRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Gate;
@@ -53,6 +55,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             OrderRepositoryInterface::class,
             OrderRepository::class
+        );
+
+        $this->app->bind(
+            SettingRepositoryInterface::class,
+            SettingRepository::class
         );
     }
 

@@ -61,13 +61,16 @@
 
                     <!-- Menu Sistema -->
                     @can('manage-users')
-                        <x-nav-dropdown :active="request()->routeIs('users.*')">
+                        <x-nav-dropdown :active="request()->routeIs('users.*') || request()->routeIs('settings.*')">
                             <x-slot name="trigger">
                                 Sistema
                             </x-slot>
                             <x-slot name="content">
                                 <x-nav-dropdown-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                                     Usuários
+                                </x-nav-dropdown-link>
+                                <x-nav-dropdown-link :href="route('settings.index')" :active="request()->routeIs('settings.*')">
+                                    Configurações
                                 </x-nav-dropdown-link>
                             </x-slot>
                         </x-nav-dropdown>
@@ -201,7 +204,7 @@
             @can('manage-users')
                 <div x-data="{ openSistema: false }">
                     <button @click="openSistema = !openSistema"
-                            class="w-full flex items-center justify-between ps-3 pe-4 py-2 border-l-4 {{ request()->routeIs('users.*') ? 'border-indigo-400 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/50' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600' }} text-start text-base font-medium transition duration-150 ease-in-out">
+                            class="w-full flex items-center justify-between ps-3 pe-4 py-2 border-l-4 {{ request()->routeIs('users.*') || request()->routeIs('settings.*') ? 'border-indigo-400 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/50' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600' }} text-start text-base font-medium transition duration-150 ease-in-out">
                         <span>Sistema</span>
                         <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-180': openSistema }" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -210,6 +213,9 @@
                     <div x-show="openSistema" x-transition class="ps-4">
                         <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                             Usuários
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('settings.index')" :active="request()->routeIs('settings.*')">
+                            Configurações
                         </x-responsive-nav-link>
                     </div>
                 </div>

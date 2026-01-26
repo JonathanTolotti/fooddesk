@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\OrderItem;
 use App\Services\OrderService;
+use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -11,7 +12,8 @@ use Illuminate\View\View;
 class KitchenController extends Controller
 {
     public function __construct(
-        private readonly OrderService $orderService
+        private readonly OrderService $orderService,
+        private readonly SettingService $settingService
     ) {}
 
     /**
@@ -19,7 +21,9 @@ class KitchenController extends Controller
      */
     public function index(): View
     {
-        return view('kitchen.index');
+        $kitchenSettings = $this->settingService->getKitchenAlertThresholds();
+
+        return view('kitchen.index', compact('kitchenSettings'));
     }
 
     /**

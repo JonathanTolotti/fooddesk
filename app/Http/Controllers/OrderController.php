@@ -13,6 +13,7 @@ use App\Models\Table;
 use App\Services\CategoryService;
 use App\Services\OrderService;
 use App\Services\ProductService;
+use App\Services\SettingService;
 use App\Services\TableService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,8 @@ class OrderController extends Controller
         private readonly OrderService $orderService,
         private readonly TableService $tableService,
         private readonly CategoryService $categoryService,
-        private readonly ProductService $productService
+        private readonly ProductService $productService,
+        private readonly SettingService $settingService
     ) {}
 
     /**
@@ -202,7 +204,9 @@ class OrderController extends Controller
             ];
         });
 
-        return view('orders.show', compact('order', 'categories', 'tables', 'orderData', 'itemsData', 'paymentsData'));
+        $serviceFeeLabel = $this->settingService->getServiceFeeLabel();
+
+        return view('orders.show', compact('order', 'categories', 'tables', 'orderData', 'itemsData', 'paymentsData', 'serviceFeeLabel'));
     }
 
     /**
@@ -711,6 +715,9 @@ class OrderController extends Controller
     {
         $order->load(['table', 'user', 'items.ingredientCustomizations', 'payments']);
 
-        return view('orders.receipt', compact('order'));
+        $establishment = $this->settingService->getEstablishmentInfo();
+        $serviceFeeLabel = $this->settingService->getServiceFeeLabel();
+
+        return view('orders.receipt', compact('order', 'establishment', 'serviceFeeLabel'));
     }
 }

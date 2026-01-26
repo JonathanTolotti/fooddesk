@@ -12,22 +12,37 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Table;
 use App\Services\CustomerService;
+use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CustomerMenuController extends Controller
 {
     public function __construct(
-        private CustomerService $customerService
+        private CustomerService $customerService,
+        private SettingService $settingService
     ) {}
+
+    /**
+     * Check if self-service is enabled
+     */
+    private function checkSelfServiceEnabled(): void
+    {
+        if (! $this->settingService->get('enable_qr_self_service', true)) {
+            abort(404, 'Autoatendimento não disponível.');
+        }
+    }
 
     /**
      * Display the customer identification page or menu
      */
     public function index(Request $request, string $tableUuid): View
     {
+        $this->checkSelfServiceEnabled();
+
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
@@ -63,6 +78,8 @@ class CustomerMenuController extends Controller
      */
     public function searchCustomer(SearchCustomerRequest $request, string $tableUuid): JsonResponse
     {
+        $this->checkSelfServiceEnabled();
+
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
@@ -87,6 +104,8 @@ class CustomerMenuController extends Controller
      */
     public function registerCustomer(StoreCustomerRequest $request, string $tableUuid): JsonResponse
     {
+        $this->checkSelfServiceEnabled();
+
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
@@ -134,6 +153,8 @@ class CustomerMenuController extends Controller
      */
     public function getOrder(string $tableUuid): JsonResponse
     {
+        $this->checkSelfServiceEnabled();
+
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
@@ -154,6 +175,8 @@ class CustomerMenuController extends Controller
      */
     public function addItem(AddCustomerOrderItemRequest $request, string $tableUuid): JsonResponse
     {
+        $this->checkSelfServiceEnabled();
+
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
@@ -250,6 +273,8 @@ class CustomerMenuController extends Controller
      */
     public function removeItem(Request $request, string $tableUuid, int $itemId): JsonResponse
     {
+        $this->checkSelfServiceEnabled();
+
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
@@ -289,6 +314,8 @@ class CustomerMenuController extends Controller
      */
     public function sendToKitchen(string $tableUuid): JsonResponse
     {
+        $this->checkSelfServiceEnabled();
+
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();
@@ -321,6 +348,8 @@ class CustomerMenuController extends Controller
      */
     public function callWaiter(string $tableUuid): JsonResponse
     {
+        $this->checkSelfServiceEnabled();
+
         $table = Table::where('uuid', $tableUuid)
             ->where('is_active', true)
             ->firstOrFail();

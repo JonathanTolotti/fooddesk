@@ -157,9 +157,13 @@
     <button class="print-btn no-print" onclick="window.print()">Imprimir Recibo</button>
 
     <div class="header">
-        <h1>FOODDESK</h1>
-        <p>Sistema de Gestão</p>
-        <p>Tel: (00) 0000-0000</p>
+        <h1>{{ $establishment['name'] }}</h1>
+        @if($establishment['address'])
+            <p>{{ $establishment['address'] }}</p>
+        @endif
+        @if($establishment['phone'])
+            <p>Tel: {{ $establishment['phone'] }}</p>
+        @endif
     </div>
 
     <div class="info">
@@ -235,7 +239,7 @@
         @endif
         @if($order->service_fee > 0)
             <div class="row">
-                <span>Taxa de Serviço (10%):</span>
+                <span>{{ $serviceFeeLabel }}:</span>
                 <span>+ R$ {{ number_format($order->service_fee, 2, ',', '.') }}</span>
             </div>
         @endif
@@ -259,9 +263,9 @@
 
     <div class="footer">
         <p>================================</p>
-        <p>Obrigado pela preferência!</p>
+        <p>{{ $establishment['footer_message'] }}</p>
         <p>================================</p>
-        <p>Impresso usando FoodDesk</p>
+        <p>{{ $establishment['name'] }}</p>
         <p style="margin-top: 5px; font-size: 10px;">
             {{ now()->format('d/m/Y H:i:s') }}
         </p>
