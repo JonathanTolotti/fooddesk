@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerMenuController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
@@ -25,9 +26,15 @@ Route::get('/', function () {
     return match ($user->role) {
         UserRole::Waiter => redirect()->route('waiter.index'),
         UserRole::Kitchen => redirect()->route('kitchen.index'),
-        default => view('dashboard'),
+        default => redirect()->route('dashboard'),
     };
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified']);
+
+// Dashboard (only for managers)
+Route::middleware(['auth', 'can:manage-users'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/data', [DashboardController::class, 'data'])->name('dashboard.data');
+});
 
 // Public routes - Customer Self-Service
 Route::prefix('menu/{tableUuid}')->group(function () {
